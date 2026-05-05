@@ -40,14 +40,40 @@
     <div class="auth-container">
         <div class="glass-card auth-card">
             <h2 class="text-center mb-4">Welcome Back</h2>
-            <form method="post">
+            
+            <!-- Display error messages -->
+            {% if form.non_field_errors %}
+                <div class="alert alert-danger alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-circle me-2"></i>
+                    <strong>Login Failed!</strong>
+                    {% for error in form.non_field_errors %}
+                        <div>{{ error }}</div>
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+            
+            {% if form.errors %}
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                    <i class="bi bi-exclamation-triangle me-2"></i>
+                    <strong>Check your input:</strong>
+                    {% for field, errors in form.errors.items %}
+                        {% if field != '__all__' %}
+                            <div><strong>{{ field }}:</strong> {{ errors.0 }}</div>
+                        {% endif %}
+                    {% endfor %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+            
+            <form method="post" novalidate>
                 {% csrf_token %}
                 {% if request.GET.next %}
                     <input type="hidden" name="next" value="{{ request.GET.next }}">
                 {% endif %}
                 <div class="mb-3">
                     <label class="form-label">Username</label>
-                    <input type="text" name="username" class="form-control bg-dark text-white border-secondary" required>
+                    <input type="text" name="username" class="form-control bg-dark text-white border-secondary" value="{{ form.username.value|default:'' }}" required autofocus>
                 </div>
                 <div class="mb-4">
                     <label class="form-label">Password</label>
