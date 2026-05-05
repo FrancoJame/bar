@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+
+{% block title %}POS Dashboard - CHUPA ku CHUPA{% endblock %}
+
+{% block extra_css %}
+<style>
+    .customer-name-input::placeholder {
+        color: #ff4444 !important;
+        opacity: 1;
+    }
+
+    /* Mobile-first POS layout */
+    .pos-container {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    .pos-products {
+        order: 1;
+    }
+
+    .pos-cart {
+        order: 2;
+        top: auto;
+    }
+
+    /* Tablet and up - side-by-side layout */
+    @media (min-width: 768px) {
+        .pos-container {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .pos-products {
+            order: 1;
+        }
+
+        .pos-cart {
+            position: sticky;
+            top: 120px;
+            height: fit-content;
+        }
+    }
+
+    /* Category tabs - scrollable on mobile */
+    #categoryTabs {
+        gap: 0.5rem;
+    }
+
+    #categoryTabs .nav-link {
+        white-space: nowrap;
+        font-size: 0.9rem;
+        padding: 0.5rem 1rem;
+    }
+
+    /* Product grid responsive */
+    #productGrid {
+        --bs-gutter-x: 0.75rem;
+        --bs-gutter-y: 0.75rem;
+    }
+
+    #productGrid .glass-card {
+        min-height: 120px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    /* Cart styling */
+    #cartItems {
+        max-height: 350px;
+        overflow-y: auto;
+        scrollbar-width: thin;
+    }
+
+    /* Better spacing for form inputs in cart */
+    .pos-cart input,
+    .pos-cart select {
+        margin-bottom: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade">
+    <h2 class="mb-4">Point of Sale</h2>
+    
+    <ul class="nav nav-pills mb-4 flex-nowrap overflow-auto pb-2" id="categoryTabs" style="white-space: nowrap;">
+        <li class="nav-item">
+            <button class="nav-link active btn-outline-gold" data-category="all">All Items</button>
+        </li>
+        {% for category in categories %}
+            <li class="nav-item">
+                <button class="nav-link btn-outline-gold" data-category="{{ category.id }}">{{ category.name }}</button>
+            </li>
+        {% endfor %}
+    </ul>
+
+    <div class="pos-container">
+        <!-- Products Section -->
+        <div class="pos-products">
+            <div class="row row-cols-2 row-cols-sm-3 g-3" id="productGrid">
+                {% for product in products %}
+                    <div class="col product-item" data-category="{{ product.category.id }}">
+                        <div class="glass-card p-3 text-center h-100" style="cursor: pointer;" 
+                             onclick="addToCart({{ product.id }}, '{{ product.name }}', {{ product.price }})">
+                            <h4 class="h6 mb-2">{{ product.name }}</h4>
+                            <span class="text-gold fw-bold">Ugx {{ product.price }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Cart Section -->
+        <div class="pos-cart">
+            <div class="glass-card">
+            <h3 class="h4 mb-4">Current Order</h3>
+                <div id="cartItems" class="mb-4">
+                    <p class="text-white-50 text-center py-3" id="emptyCartMsg">Order is empty</p>
+                    <!-- Items will be injected here -->
+                </div>
+                
+                <div class="border-top border-secondary pt-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Subtotal</span>
+                        <span id="subtotal">Ugx 0.00</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-4 fs-5 fw-bold">
+                        <span>Total</span>
+                        <span id="total" class="text-gold">Ugx 0.00</span>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <input type="text" id="customerName" class="form-control bg-dark text-white border-secondary customer-name-input" placeholder="Customer name" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <input type="text" id="staffName" class="form-control bg-dark text-white border-secondary" placeholder="Staff name (optional)" value="{{ user.username }}">
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-white-50">Payment Method</label>
+                        <select id="paymentMethod" class="form-select bg-dark text-white border-secondary">
+                            <option value="CASH">Cash</option>
+                            <option value="MOBILE_MONEY">Mobile Money</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label small text-white-50">Amount Paid (Ugx)</label>
+                        <input type="number" id="amountPaid" class="form-control bg-dark text-white border-secondary" placeholder="0.00">
+                    </div>
+                    
+                    <div id="mobileMoneyFields" style="display: none;">
+                        <div class="mb-3">
+                            <label class="form-label small text-white-50">Transaction ID</label>
+                            <input type="text" id="transactionId" class="form-control bg-dark text-white border-secondary" placeholder="Enter Transaction ID">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label small text-white-50">Telephone Used</label>
+                            <input type="tel" id="paymentPhone" class="form-control bg-dark text-white border-secondary" placeholder="Enter phone number">
+                        </div>
+                    </div>
+
+                    
+                    <button class="btn btn-gold w-100 py-3" onclick="processOrder()">Complete Order & Print Receipt</button>
+                </div>
+
+<form id="orderForm" method="POST" action="{% url 'api:order-list' %}" style="display: none;">
+    {% csrf_token %}
+</form>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let cart = [];
+    
+    function addToCart(id, name, price) {
+        const existing = cart.find(item => item.id === id);
+        if (existing) {
+            existing.qty++;
+        } else {
+            cart.push({ id, name, price, qty: 1 });
+        }
+        renderCart();
+    }
+
+    function removeFromCart(id) {
+        cart = cart.filter(item => item.id !== id);
+        renderCart();
+    }
+
+    function updateQty(id, delta) {
+        const item = cart.find(i => i.id === id);
+        if (item) {
+            item.qty += delta;
+            if (item.qty <= 0) removeFromCart(id);
+        }
+        renderCart();
+    }
+
+    function renderCart() {
+        const container = document.getElementById('cartItems');
+        const emptyMsg = document.getElementById('emptyCartMsg');
+        
+        if (cart.length === 0) {
+            container.innerHTML = '<p class="text-white-50 text-center py-3" id="emptyCartMsg">Order is empty</p>';
+            updateTotals(0);
+            return;
+        }
+
+        container.innerHTML = cart.map(item => `
+            <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-dark rounded">
+                <div>
+                    <h6 class="mb-0">${item.name}</h6>
+                    <small class="text-white-50">Ugx ${item.price} x ${item.qty}</small>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-sm btn-outline-secondary px-2" onclick="updateQty(${item.id}, -1)">-</button>
+                    <span class="mx-2">${item.qty}</span>
+                    <button class="btn btn-sm btn-outline-secondary px-2" onclick="updateQty(${item.id}, 1)">+</button>
+                    <button class="btn btn-sm text-danger ms-2" onclick="removeFromCart(${item.id})">&times;</button>
+                </div>
+            </div>
+        `).join('');
+        
+        const subtotal = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        updateTotals(subtotal);
+    }
+
+    function updateTotals(val) {
+        const formatted = `Ugx ${val.toFixed(2)}`;
+        document.getElementById('subtotal').innerText = formatted;
+        document.getElementById('total').innerText = formatted;
+    }
+
+    // Category filtering
+    document.querySelectorAll('[data-category]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const cat = btn.getAttribute('data-category');
+            document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+            btn.classList.add('active');
+            
+            document.querySelectorAll('.product-item').forEach(item => {
+                if (cat === 'all' || item.getAttribute('data-category') === cat) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    });
+
+    async function processOrder() {
+        if (cart.length === 0) {
+            alert('Cart is empty!');
+            return;
+        }
+
+        const customerName = document.getElementById('customerName').value;
+        const staffName = document.getElementById('staffName').value;
+        const paymentMethod = document.getElementById('paymentMethod').value;
+        const amountPaid = document.getElementById('amountPaid').value || 0;
+        const transactionId = document.getElementById('transactionId').value;
+        const paymentPhone = document.getElementById('paymentPhone').value;
+        
+        const orderData = {
+            customer_name: customerName,
+            staff_name: staffName,
+            payment_method: paymentMethod,
+            amount_paid: amountPaid,
+            transaction_id: paymentMethod === 'MOBILE_MONEY' ? transactionId : null,
+            payment_phone: paymentMethod === 'MOBILE_MONEY' ? paymentPhone : null,
+            is_paid: true,
+            total_amount: cart.reduce((sum, item) => sum + (item.price * item.qty), 0),
+            items: cart.map(item => ({
+                product: item.id,
+                quantity: item.qty,
+                price_at_time: item.price
+            }))
+        };
+
+        // Note: For simplicity in this demo, I'll use the API via fetch
+        // In a real app, you'd handle CSRF tokens properly
+        try {
+            const response = await fetch('/api/orders/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(orderData)
+            });
+            
+            if (response.ok) {
+                const result = await response.json();
+                window.location.href = `/orders/receipt/${result.id}/`;
+            } else {
+                const errorText = await response.text();
+                alert('Error creating order: ' + errorText);
+            }
+        } catch (err) {
+            console.error(err);
+            alert('Failed to process order: ' + err.message);
+        }
+    }
+
+    document.getElementById('paymentMethod').addEventListener('change', function() {
+        const mmFields = document.getElementById('mobileMoneyFields');
+        if (this.value === 'MOBILE_MONEY') {
+            mmFields.style.display = 'block';
+        } else {
+            mmFields.style.display = 'none';
+        }
+    });
+</script>
+{% endblock %}

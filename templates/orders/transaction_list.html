@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Transactions - CHUPA ku CHUPA{% endblock %}
+
+{% block content %}
+<div class="animate-fade">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Transactions History</h2>
+        <a href="{% url 'orders:pos' %}" class="btn btn-outline-gold"><i class="bi bi-cart"></i> Back to POS</a>
+    </div>
+
+    <div class="glass-card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr class="border-gold">
+                        <th class="ps-4 py-3">Order ID</th>
+                        <th class="py-3">Date</th>
+                        <th class="py-3">Staff</th>
+                        <th class="py-3">Customer</th>
+                        <th class="py-3">Method</th>
+                        <th class="py-3">Total (Ugx)</th>
+                        <th class="py-3">Status</th>
+                        <th class="pe-4 text-center py-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for txn in transactions %}
+                        <tr>
+                            <td class="ps-4 py-3">#{{ txn.id }}</td>
+                            <td class="py-3">{{ txn.created_at|date:"M d, Y H:i" }}</td>
+                            <td class="py-3">{{ txn.staff_member.username }}</td>
+                            <td class="py-3">{{ txn.customer_name|default:"-" }}</td>
+                            <td class="py-3">
+                                {{ txn.get_payment_method_display }}
+                                {% if txn.transaction_id %}
+                                    <br><small class="text-white-50">{{ txn.transaction_id }}</small>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 fw-bold text-gold">{{ txn.total_amount }}</td>
+                            <td class="py-3">
+                                {% if txn.is_paid %}
+                                    <span class="badge bg-success">Paid</span>
+                                {% else %}
+                                    <span class="badge bg-danger">Unpaid</span>
+                                {% endif %}
+                            </td>
+                            <td class="pe-4 py-3 text-center">
+                                <a href="{% url 'orders:receipt' txn.id %}" class="btn btn-sm btn-outline-info" title="Print Receipt">
+                                    <i class="bi bi-printer"></i> Print
+                                </a>
+                                {% if user.role == 'MANAGER' %}
+                                    <a href="{% url 'orders:transaction_edit' txn.id %}" class="btn btn-sm btn-outline-warning ms-1" title="Edit">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a href="{% url 'orders:transaction_delete' txn.id %}" class="btn btn-sm btn-outline-danger ms-1" title="Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center py-5 text-white-50">No transactions found.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

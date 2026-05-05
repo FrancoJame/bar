@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Receipt #{{ order.id }} - CHUPA ku CHUPA{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .navbar, footer, .no-print {
+            display: none !important;
+        }
+        body {
+            background: white !important;
+            color: black !important;
+            padding: 0;
+            margin: 0;
+        }
+        .receipt-container {
+            border: none !important;
+            box-shadow: none !important;
+            width: 80mm; /* Typical thermal printer width */
+            margin: 0 auto;
+        }
+        .container { width: 100% !important; max-width: 100% !important; }
+    }
+
+    .receipt-container {
+        max-width: 500px;
+        margin: 2rem auto;
+        padding: 2rem;
+        background: white;
+        color: black;
+        border-radius: 0;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        font-family: 'Courier New', Courier, monospace;
+    }
+
+    .receipt-header {
+        border-bottom: 2px dashed #ccc;
+        padding-bottom: 1rem;
+        margin-bottom: 1rem;
+    }
+
+    .receipt-footer {
+        border-top: 2px dashed #ccc;
+        padding-top: 1rem;
+        margin-top: 1rem;
+        text-align: center;
+    }
+
+    .receipt-item {
+        margin-bottom: 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="text-center mb-4 no-print animate-fade">
+    <button onclick="window.print()" class="btn btn-gold px-5 py-3">
+        <i class="bi bi-printer"></i> Print Receipt Now
+    </button>
+    <a href="{% url 'orders:pos' %}" class="btn btn-outline-light ms-3">Back to POS</a>
+</div>
+
+<div class="receipt-container animate-fade">
+    <div class="receipt-header text-center">
+        <h2 class="mb-1">CHUPA ku CHUPA</h2>
+        <p class="small mb-0">Bar & Lounge</p>
+        <p class="small">KAMPALA, UGANDA</p>
+        <p class="mb-0">Order #{{ order.id }}</p>
+        <p class="small text-muted">{{ order.created_at|date:"M d, Y H:i" }}</p>
+    </div>
+
+    <div class="mb-3">
+        <p class="mb-1"><strong>Staff:</strong> {% if order.staff_name %}{{ order.staff_name }}{% else %}{{ order.staff_member.username }}{% endif %}</p>
+        {% if order.customer_name %}
+            <p class="mb-0"><strong>Customer:</strong> {{ order.customer_name }}</p>
+        {% endif %}
+    </div>
+
+    <div class="items-list mb-4">
+        <div class="d-flex justify-content-between border-bottom pb-1 mb-2 fw-bold">
+            <span>Item</span>
+            <span>Total</span>
+        </div>
+        {% for item in order.items.all %}
+            <div class="receipt-item d-flex justify-content-between">
+                <span>{{ item.quantity }} x {{ item.product.name }}</span>
+                <span>Ugx {{ item.price_at_time }}</span>
+            </div>
+        {% endfor %}
+    </div>
+
+    <div class="totals border-top pt-2">
+        <div class="d-flex justify-content-between fs-6">
+            <span>Subtotal</span>
+            <span>Ugx {{ order.total_amount }}</span>
+        </div>
+        <div class="d-flex justify-content-between fs-6">
+            <span>Payment Method</span>
+            <span>{{ order.get_payment_method_display }}</span>
+        </div>
+        <div class="d-flex justify-content-between fs-6">
+            <span>Amount Paid</span>
+            <span>Ugx {{ order.amount_paid }}</span>
+        </div>
+        {% if order.payment_phone %}
+        <div class="d-flex justify-content-between fs-6">
+            <span>Tel. Used</span>
+            <span>{{ order.payment_phone }}</span>
+        </div>
+        {% endif %}
+        {% if order.transaction_id %}
+        <div class="d-flex justify-content-between fs-6">
+            <span>Trans. ID</span>
+            <span>{{ order.transaction_id }}</span>
+        </div>
+        {% endif %}
+        <div class="d-flex justify-content-between fs-5 fw-bold mt-2 pt-2 border-top">
+            <span>CHANGE</span>
+            <span>Ugx {{ order.change }}</span>
+        </div>
+    </div>
+
+    <div class="receipt-footer mt-5">
+        <p class="mb-0">Thank you for your visit!</p>
+        <p class="small">Follow us @chupakuchupa</p>
+        <div class="mt-2" style="font-size: 10px;">
+            ********************************
+        </div>
+    </div>
+</div>
+{% endblock %}

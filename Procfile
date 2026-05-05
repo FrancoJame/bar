@@ -1,0 +1,1 @@
+web: gunicorn chupa_project.wsgi

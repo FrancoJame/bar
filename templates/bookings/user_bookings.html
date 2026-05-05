@@ -1,0 +1,58 @@
+{% extends 'base.html' %}
+
+{% block title %}My Bookings - CHUPA ku CHUPA{% endblock %}
+
+{% block content %}
+<div class="row mb-5 animate-fade">
+    <div class="col-12">
+        <h1 class="display-4">My Bookings</h1>
+        <p class="text-white-50">Manage your upcoming lounge experiences</p>
+    </div>
+</div>
+
+<div class="row animate-fade">
+    <div class="col-12">
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr>
+                            <th>Room</th>
+                            <th>Date & Time</th>
+                            <th>Status</th>
+                            <th>Total Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr>
+                                <td class="py-3">
+                                    <span class="fw-bold">{{ booking.room.name }}</span>
+                                </td>
+                                <td class="py-3">
+                                    {{ booking.start_time|date:"M d, Y" }}<br>
+                                    <small class="text-white-50">{{ booking.start_time|date:"H:i" }} - {{ booking.end_time|date:"H:i" }}</small>
+                                </td>
+                                <td class="py-3">
+                                    <span class="badge {% if booking.status == 'CONFIRMED' %}bg-success{% elif booking.status == 'PENDING' %}bg-warning{% else %}bg-secondary{% endif %}">
+                                        {{ booking.status }}
+                                    </span>
+                                </td>
+                                <td class="py-3 fw-bold text-gold">
+                                    Ugx {{ booking.total_price }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-5 text-white-50">
+                                    You have no bookings yet. <a href="{% url 'bookings:lounge_list' %}" class="text-gold">Browse Lounge Rooms</a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

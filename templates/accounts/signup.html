@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Sign Up - CHUPA ku CHUPA{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Responsive signup form */
+    .auth-container {
+        max-width: 100%;
+        padding: 0 1rem;
+    }
+
+    @media (min-width: 768px) {
+        .auth-container {
+            max-width: 500px;
+            margin: 0 auto;
+            padding: 0;
+        }
+    }
+
+    /* Basic styling for django form fields if not using crispy-forms */
+    form input, form select, form textarea {
+        width: 100%;
+        padding: 0.75rem;
+        background-color: #212529;
+        color: white;
+        border: 1px solid #495057;
+        border-radius: 0.25rem;
+        font-size: 1rem;
+    }
+
+    form input:focus, form select:focus, form textarea:focus {
+        background-color: #2b3035;
+        color: white;
+        border-color: #D4AF37;
+        outline: none;
+    }
+
+    /* Help text styling */
+    .form-text {
+        font-size: 0.85rem;
+        margin-top: 0.25rem;
+    }
+
+    /* Error message styling */
+    .text-danger {
+        font-size: 0.9rem;
+        margin-top: 0.25rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade">
+    <div class="auth-container">
+        <div class="glass-card">
+            <h2 class="text-center text-gold mb-2">Create Account</h2>
+            <p class="text-center text-white-50 mb-4">Create an account to track your lounge bookings.</p>
+            
+            <form method="post" action="{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label text-white">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text text-white-50">{{ field.help_text|safe }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-gold py-3 fw-bold">Sign Up</button>
+                </div>
+            </form>
+            
+            <div class="mt-4 text-center">
+                <p class="mb-0 text-white-50">Already have an account? <a href="{% url 'login' %}{% if request.GET.next %}?next={{ request.GET.next }}{% endif %}" class="text-gold text-decoration-none">Login</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const passwordInputs = document.querySelectorAll('input[type="password"]');
+        
+        passwordInputs.forEach(input => {
+            // Create a wrapper div
+            const wrapper = document.createElement('div');
+            wrapper.className = 'input-group';
+            
+            // Insert wrapper before input
+            input.parentNode.insertBefore(wrapper, input);
+            
+            // Move input into wrapper
+            wrapper.appendChild(input);
+            
+            // Adjust input style to fit input-group
+            input.style.borderTopRightRadius = '0';
+            input.style.borderBottomRightRadius = '0';
+            
+            // Create button
+            const btn = document.createElement('button');
+            btn.className = 'btn btn-outline-secondary';
+            btn.type = 'button';
+            btn.innerHTML = '<i class="bi bi-eye"></i>';
+            
+            // Add click listener
+            btn.addEventListener('click', function() {
+                const icon = this.querySelector('i');
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    icon.classList.remove('bi-eye');
+                    icon.classList.add('bi-eye-slash');
+                } else {
+                    input.type = 'password';
+                    icon.classList.remove('bi-eye-slash');
+                    icon.classList.add('bi-eye');
+                }
+            });
+            
+            // Append button to wrapper
+            wrapper.appendChild(btn);
+        });
+    });
+</script>
+{% endblock %}

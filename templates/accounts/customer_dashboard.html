@@ -1,0 +1,243 @@
+{% extends 'base.html' %}
+
+{% block title %}My Account - CHUPA ku CHUPA{% endblock %}
+
+{% block content %}
+<div class="row mb-5 animate-fade">
+    <div class="col-12">
+        <h1 class="display-4">My Account</h1>
+        <p class="text-white-50">Welcome, {{ user_profile.get_full_name|default:user_profile.username }}!</p>
+    </div>
+</div>
+
+<!-- Profile Section -->
+<div class="row mb-5 animate-fade">
+    <div class="col-md-4">
+        <div class="glass-card p-4 text-center">
+            <div class="mb-3">
+                <i class="bi bi-person-circle" style="font-size: 3rem; color: var(--primary-gold);"></i>
+            </div>
+            <h3 class="text-gold mb-3">{{ user_profile.get_full_name|default:user_profile.username }}</h3>
+            <p class="text-white-50 mb-2">
+                <small><i class="bi bi-envelope"></i> {{ user_profile.email }}</small>
+            </p>
+            {% if user_profile.phone %}
+            <p class="text-white-50 mb-3">
+                <small><i class="bi bi-telephone"></i> {{ user_profile.phone }}</small>
+            </p>
+            {% endif %}
+            <p class="text-muted mb-3">
+                <small class="badge bg-gold text-dark">{{ user_profile.get_role_display }}</small>
+            </p>
+            <a href="{% url 'bookings:lounge_list' %}" class="btn btn-outline-gold btn-sm w-100">
+                <i class="bi bi-plus-circle"></i> Make New Booking
+            </a>
+        </div>
+    </div>
+    
+    <!-- Stats Section -->
+    <div class="col-md-8">
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <div class="glass-card p-4 text-center">
+                    <h2 class="text-gold mb-2">{{ total_bookings }}</h2>
+                    <p class="text-white-50 mb-0"><small><i class="bi bi-calendar-event"></i> Total Bookings</small></p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="glass-card p-4 text-center">
+                    <h2 class="text-warning mb-2">{{ pending_count }}</h2>
+                    <p class="text-white-50 mb-0"><small><i class="bi bi-hourglass-split"></i> Pending</small></p>
+                </div>
+            </div>
+            <div class="col-md-4 mb-3">
+                <div class="glass-card p-4 text-center">
+                    <h2 class="text-success mb-2">{{ confirmed_count }}</h2>
+                    <p class="text-white-50 mb-0"><small><i class="bi bi-check-circle"></i> Confirmed</small></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bookings Section -->
+<div class="row animate-fade">
+    <div class="col-12">
+        <h2 class="text-gold mb-4">
+            <i class="bi bi-calendar-check"></i> My Room Bookings
+        </h2>
+        
+        <div class="glass-card">
+            <div class="table-responsive">
+                <table class="table table-dark table-hover mb-0">
+                    <thead>
+                        <tr class="border-bottom border-gold">
+                            <th class="text-gold py-3"><i class="bi bi-door-closed"></i> Room</th>
+                            <th class="text-gold py-3"><i class="bi bi-calendar2-event"></i> Date & Time</th>
+                            <th class="text-gold py-3"><i class="bi bi-hourglass-split"></i> Duration</th>
+                            <th class="text-gold py-3"><i class="bi bi-badge-check"></i> Status</th>
+                            <th class="text-gold py-3"><i class="bi bi-currency-dollar"></i> Price</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for booking in bookings %}
+                            <tr class="booking-row">
+                                <td class="py-3">
+                                    <span class="fw-bold">{{ booking.room.name }}</span>
+                                    <br>
+                                    <small class="text-white-50">Capacity: {{ booking.room.capacity }} people</small>
+                                </td>
+                                <td class="py-3">
+                                    <strong>{{ booking.start_time|date:"d M, Y" }}</strong><br>
+                                    <small class="text-white-50">{{ booking.start_time|date:"H:i" }}</small>
+                                </td>
+                                <td class="py-3">
+                                    {% if booking.booking_type == 'HOURLY' %}
+                                        <span class="badge bg-secondary">Hourly</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">Full Day</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    {% if booking.status == 'PENDING' %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="bi bi-hourglass-split"></i> Pending Approval
+                                        </span>
+                                    {% elif booking.status == 'AVAILABLE' %}
+                                        <span class="badge bg-success">
+                                            <i class="bi bi-check-circle"></i> Available
+                                        </span>
+                                    {% elif booking.status == 'BUSY' %}
+                                        <span class="badge bg-danger">
+                                            <i class="bi bi-exclamation-circle"></i> Busy
+                                        </span>
+                                    {% elif booking.status == 'FREE_SOON' %}
+                                        <span class="badge bg-info">
+                                            <i class="bi bi-clock-history"></i> Free Soon
+                                        </span>
+                                    {% elif booking.status == 'UNAVAILABLE' %}
+                                        <span class="badge bg-secondary">
+                                            <i class="bi bi-x-circle"></i> Unavailable
+                                        </span>
+                                    {% elif booking.status == 'CANCELLED' %}
+                                        <span class="badge bg-dark border border-danger">
+                                            <i class="bi bi-x-circle"></i> Cancelled
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ booking.status }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3 fw-bold text-gold">
+                                    Ugx {{ booking.total_price|floatformat:0 }}
+                                </td>
+                            </tr>
+                        {% empty %}
+                            <tr>
+                                <td colspan="5" class="text-center py-5">
+                                    <p class="text-white-50 mb-3">
+                                        <i class="bi bi-calendar-x" style="font-size: 2rem; display: block; margin-bottom: 1rem;"></i>
+                                        You haven't made any bookings yet.
+                                    </p>
+                                    <a href="{% url 'bookings:lounge_list' %}" class="btn btn-gold">
+                                        <i class="bi bi-plus-circle"></i> Browse Lounge Rooms
+                                    </a>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Status Legend -->
+<div class="row mt-5 animate-fade">
+    <div class="col-12">
+        <div class="glass-card p-4">
+            <h5 class="text-gold mb-3"><i class="bi bi-info-circle"></i> Booking Status Guide</h5>
+            <div class="row">
+                <div class="col-md-6">
+                    <ul class="list-unstyled text-white-50">
+                        <li class="mb-2">
+                            <span class="badge bg-warning text-dark">Pending Approval</span>
+                            <small> - Your booking is awaiting staff approval</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-success">Available</span>
+                            <small> - Room is ready for your arrival</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-danger">Busy</span>
+                            <small> - Room is currently occupied</small>
+                        </li>
+                    </ul>
+                </div>
+                <div class="col-md-6">
+                    <ul class="list-unstyled text-white-50">
+                        <li class="mb-2">
+                            <span class="badge bg-info">Free Soon</span>
+                            <small> - Room will be available within the next hour</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-secondary">Unavailable</span>
+                            <small> - Room is not available at this time</small>
+                        </li>
+                        <li class="mb-2">
+                            <span class="badge bg-dark border border-danger">Cancelled</span>
+                            <small> - This booking has been cancelled</small>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .btn-gold {
+        background-color: var(--primary-gold) !important;
+        color: var(--dark-bg) !important;
+        border: none;
+        transition: all 0.3s ease;
+    }
+    
+    .btn-gold:hover {
+        background-color: #E5C158 !important;
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-outline-gold {
+        color: var(--primary-gold);
+        border: 1px solid var(--primary-gold);
+    }
+    
+    .btn-outline-gold:hover {
+        background-color: var(--primary-gold);
+        color: var(--dark-bg);
+    }
+    
+    .booking-row {
+        border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+        transition: background-color 0.3s ease;
+    }
+    
+    .booking-row:hover {
+        background-color: rgba(212, 175, 55, 0.05);
+    }
+    
+    .glass-card {
+        background: rgba(255, 255, 255, 0.05);
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(212, 175, 55, 0.2);
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+    
+    .glass-card:hover {
+        background: rgba(255, 255, 255, 0.08);
+        border-color: rgba(212, 175, 55, 0.4);
+    }
+</style>
+{% endblock %}

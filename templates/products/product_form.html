@@ -1,0 +1,64 @@
+{% extends 'base.html' %}
+
+{% block title %}Add New Product - CHUPA ku CHUPA{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center animate-fade">
+    <div class="col-md-6">
+        <div class="glass-card">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Add New Product</h2>
+                <span class="badge bg-gold text-dark p-2 px-3">Manager</span>
+            </div>
+            
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">{{ field.label }}</label>
+                        {{ field }}
+                        {% if field.help_text %}
+                            <div class="form-text text-white-50">{{ field.help_text }}</div>
+                        {% endif %}
+                        {% for error in field.errors %}
+                            <div class="text-danger small">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+                {% endfor %}
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-warning py-2 fw-bold">Save Product</button>
+                    <a href="{% url 'products:product_list' %}" class="btn btn-outline-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Styling for generated django form fields */
+    form input[type="text"], 
+    form input[type="number"], 
+    form input[type="file"],
+    form select, 
+    form textarea {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        background-color: #212529;
+        color: white;
+        border: 1px solid #495057;
+        border-radius: 0.25rem;
+    }
+    form input:focus, form select:focus, form textarea:focus {
+        background-color: #2b3035;
+        color: white;
+        border-color: #fca311;
+        outline: none;
+    }
+    form input[type="checkbox"] {
+        margin-right: 10px;
+        transform: scale(1.2);
+    }
+</style>
+{% endblock %}

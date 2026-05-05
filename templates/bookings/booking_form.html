@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block title %}Book Lounge - CHUPA ku CHUPA{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Responsive booking form */
+    .booking-container {
+        max-width: 100%;
+    }
+
+    @media (min-width: 768px) {
+        .booking-container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+    }
+
+    /* Better button group for booking type */
+    .booking-type-group {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+    }
+
+    .booking-type-group .btn-group {
+        display: contents;
+    }
+
+    .booking-type-group input[type="radio"] {
+        display: none;
+    }
+
+    .booking-type-group label {
+        padding: 1rem;
+        text-align: center;
+        cursor: pointer;
+        border: 2px solid var(--glass-bg);
+        border-radius: 8px;
+        background: var(--card-bg);
+        transition: all 0.3s ease;
+    }
+
+    .booking-type-group input[type="radio"]:checked + label {
+        border-color: var(--primary-gold);
+        background: rgba(212, 175, 55, 0.1);
+    }
+
+    .booking-type-group label strong {
+        display: block;
+        font-size: 1rem;
+        margin-bottom: 0.25rem;
+    }
+
+    .booking-type-group label small {
+        display: block;
+        font-size: 0.85rem;
+    }
+
+    /* Alert improvements */
+    .booking-alert {
+        gap: 1rem;
+    }
+
+    @media (max-width: 576px) {
+        .booking-alert {
+            flex-direction: column !important;
+        }
+
+        .booking-alert .btn {
+            width: 100%;
+        }
+    }
+
+    /* Form section divider */
+    .form-section {
+        margin-bottom: 1.75rem;
+    }
+
+    .form-section-title {
+        font-size: 0.9rem;
+        color: var(--text-light);
+        margin-bottom: 1rem;
+        padding-bottom: 0.75rem;
+        border-bottom: 1px solid var(--glass-bg);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="animate-fade">
+    <div class="booking-container">
+        <div class="glass-card">
+            <h2 class="mb-1">Reserve Your Lounge</h2>
+            <p class="text-white-50 mb-4">Fill in your details to complete the booking</p>
+
+            {% if not user.is_authenticated %}
+            <div class="alert alert-secondary bg-dark text-white border-warning mb-4 p-3 booking-alert d-flex flex-column flex-sm-row justify-content-between align-items-center">
+                <div>
+                    <strong class="text-warning"><i class="bi bi-person-plus"></i> Want to track your booking?</strong><br>
+                    <small class="text-white-50">Create an account to see your room status and manage bookings.</small>
+                </div>
+                <a href="{% url 'signup' %}?next={{ request.path }}" class="btn btn-warning fw-bold px-4 py-2 shadow-sm text-nowrap mt-3 mt-sm-0">Create Account</a>
+            </div>
+            {% endif %}
+
+            <form method="post">
+                {% csrf_token %}
+
+                <!-- Booking Duration -->
+                <div class="form-section">
+                    <label class="form-section-title mb-2 d-block">Select Booking Duration</label>
+                    <div class="booking-type-group">
+                        <input type="radio" class="btn-check" name="booking_type" id="hourly" value="HOURLY" checked autocomplete="off">
+                        <label for="hourly">
+                            <strong>1 Hour</strong>
+                            <small>Ugx 10,000 / hr</small>
+                        </label>
+                        <input type="radio" class="btn-check" name="booking_type" id="fullday" value="FULL_DAY" autocomplete="off">
+                        <label for="fullday">
+                            <strong>Full Day</strong>
+                            <small>Ugx 30,000 total</small>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Date & Time -->
+                <div class="form-section">
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Start Date &amp; Time</label>
+                        <input type="datetime-local" name="start_time"
+                            class="form-control bg-dark text-white border-secondary" required>
+                    </div>
+
+                    <!-- End Time (hourly only) -->
+                    <div id="end_time_group">
+                        <label class="form-label fw-bold">End Date &amp; Time <small class="text-white-50">(Hourly only)</small></label>
+                        <input type="datetime-local" name="end_time"
+                            class="form-control bg-dark text-white border-secondary">
+                    </div>
+                </div>
+
+                <!-- Customer Details -->
+                <div class="form-section">
+                    <p class="form-section-title"><i class="bi bi-person-lines-fill"></i> Customer Details</p>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Name or NIN</label>
+                        <input type="text" name="customer_nin" class="form-control bg-dark text-white border-secondary"
+                            placeholder="Enter full name or National ID Number" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Telephone Number</label>
+                        <input type="tel" name="customer_phone" class="form-control bg-dark text-white border-secondary"
+                            placeholder="e.g. 0771234567" required>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Email Address</label>
+                        <input type="email" name="customer_email" class="form-control bg-dark text-white border-secondary"
+                            placeholder="e.g. name@email.com" required>
+                    </div>
+                </div>
+
+                <div class="alert alert-info bg-dark border-info text-info small mb-4">
+                    <i class="bi bi-info-circle"></i> Pricing: <strong>Hourly = Ugx 10,000</strong> | <strong>Full Day = Ugx 30,000</strong>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-warning py-3 fw-bold">Confirm Booking</button>
+                    <a href="{% url 'bookings:lounge_list' %}" class="btn btn-outline-light">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.querySelectorAll('input[name="booking_type"]').forEach(function (radio) {
+        radio.addEventListener('change', function () {
+            var group = document.getElementById('end_time_group');
+            var endInput = document.querySelector('[name="end_time"]');
+            if (this.value === 'FULL_DAY') {
+                group.style.display = 'none';
+                endInput.required = false;
+            } else {
+                group.style.display = 'block';
+                endInput.required = true;
+            }
+        });
+    });
+    // Run on page load
+    var checked = document.querySelector('input[name="booking_type"]:checked');
+    if (checked) checked.dispatchEvent(new Event('change'));
+</script>
+{% endblock %}

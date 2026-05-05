@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Bookings - Staff Dashboard{% endblock %}
+
+{% block content %}
+<div class="animate-fade">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Manage Lounge Bookings</h1>
+        <span class="badge bg-gold text-dark p-2 px-3">Staff Mode</span>
+    </div>
+
+    <div class="glass-card p-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-dark table-hover mb-0">
+                <thead>
+                    <tr class="border-gold">
+                        <th class="ps-4">User</th>
+                        <th>Room</th>
+                        <th>Type</th>
+                        <th>Start Time</th>
+                        <th>Status</th>
+                        <th class="pe-4 text-center">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for booking in bookings %}
+                        <tr>
+                            <td class="ps-4 py-3">{{ booking.user.username }}</td>
+                            <td class="py-3">{{ booking.room.name }}</td>
+                            <td class="py-3">{{ booking.get_booking_type_display }}</td>
+                            <td class="py-3">{{ booking.start_time|date:"M d, H:i" }}</td>
+                            <td class="py-3">
+                                <span class="badge {% if booking.status == 'PENDING' %}bg-warning text-dark{% elif booking.status == 'AVAILABLE' %}bg-success{% elif booking.status == 'BUSY' %}bg-danger{% elif booking.status == 'FREE_SOON' %}bg-info{% else %}bg-secondary{% endif %}">
+                                    {{ booking.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="pe-4 py-3">
+                                <form action="{% url 'bookings:update_status' booking.pk %}" method="post" class="d-flex gap-2 justify-content-center">
+                                    {% csrf_token %}
+                                    <select name="status" class="form-select form-select-sm bg-dark text-white border-secondary" style="width: auto;">
+                                        {% for code, label in booking.STATUS_CHOICES %}
+                                            <option value="{{ code }}" {% if booking.status == code %}selected{% endif %}>{{ label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                    <button type="submit" class="btn btn-sm btn-gold">Update</button>
+                                </form>
+                            </td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center py-5 text-white-50">No bookings found in the system.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
