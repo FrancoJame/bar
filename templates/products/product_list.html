@@ -105,37 +105,76 @@
     </div>
 </div>
 
-<div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 animate-fade">
-    {% for product in products %}
-        <div class="col">
-            <div class="glass-card product-card h-100 p-0 overflow-hidden">
-                <div style="position: relative;">
-                    {% if product.image %}
-                        <img src="{{ product.image.url }}" class="product-image" alt="{{ product.name }}" loading="lazy">
-                    {% else %}
-                        <div class="product-image bg-secondary d-flex align-items-center justify-content-center">
-                            <span class="text-white-50">No Image</span>
-                        </div>
-                    {% endif %}
-                    <div class="product-price-badge">Ugx {{ product.price }}</div>
-                </div>
-                <div class="product-body">
-                    <h3 class="product-name">{{ product.name }}</h3>
-                    <p class="product-description text-white-50">{{ product.description }}</p>
-                    <div class="d-grid mt-auto">
-                        {% if user.is_authenticated and user.role == 'STAFF' %}
-                            <a href="{% url 'orders:pos' %}" class="btn btn-outline-warning btn-sm">Record Order</a>
+{% if request.resolver_match.kwargs.category_id %}
+    <!-- Show single category products in grid -->
+    <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4 animate-fade">
+        {% for product in products %}
+            <div class="col">
+                <div class="glass-card product-card h-100 p-0 overflow-hidden">
+                    <div style="position: relative;">
+                        {% if product.image %}
+                            <img src="{{ product.image.url }}" class="product-image" alt="{{ product.name }}" loading="lazy">
                         {% else %}
-                            <button class="btn btn-outline-light btn-sm" disabled>View Only</button>
+                            <div class="product-image bg-secondary d-flex align-items-center justify-content-center">
+                                <span class="text-white-50">No Image</span>
+                            </div>
                         {% endif %}
+                        <div class="product-price-badge">Ugx {{ product.price }}</div>
+                    </div>
+                    <div class="product-body">
+                        <h3 class="product-name">{{ product.name }}</h3>
+                        <p class="product-description text-white-50">{{ product.description }}</p>
+                        <div class="d-grid mt-auto">
+                            {% if user.is_authenticated and user.role == 'STAFF' %}
+                                <a href="{% url 'orders:pos' %}" class="btn btn-outline-warning btn-sm">Record Order</a>
+                            {% else %}
+                                <button class="btn btn-outline-light btn-sm" disabled>View Only</button>
+                            {% endif %}
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
-    {% empty %}
-        <div class="col-12 text-center py-5">
-            <p class="opacity-50">No products found in this category.</p>
+        {% empty %}
+            <div class="col-12 text-center py-5">
+                <p class="opacity-50">No products found in this category.</p>
+            </div>
+        {% endfor %}
+    </div>
+{% else %}
+    <!-- Show all categories with products in horizontal rows -->
+    {% for category_group in categories_with_products %}
+        <div class="mb-5">
+            <h2 class="mb-3" style="color: var(--primary-gold);">{{ category_group.category.name }}</h2>
+            <div class="row row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4 g-4 animate-fade">
+                {% for product in category_group.products %}
+                    <div class="col">
+                        <div class="glass-card product-card h-100 p-0 overflow-hidden">
+                            <div style="position: relative;">
+                                {% if product.image %}
+                                    <img src="{{ product.image.url }}" class="product-image" alt="{{ product.name }}" loading="lazy">
+                                {% else %}
+                                    <div class="product-image bg-secondary d-flex align-items-center justify-content-center">
+                                        <span class="text-white-50">No Image</span>
+                                    </div>
+                                {% endif %}
+                                <div class="product-price-badge">Ugx {{ product.price }}</div>
+                            </div>
+                            <div class="product-body">
+                                <h3 class="product-name">{{ product.name }}</h3>
+                                <p class="product-description text-white-50">{{ product.description }}</p>
+                                <div class="d-grid mt-auto">
+                                    {% if user.is_authenticated and user.role == 'STAFF' %}
+                                        <a href="{% url 'orders:pos' %}" class="btn btn-outline-warning btn-sm">Record Order</a>
+                                    {% else %}
+                                        <button class="btn btn-outline-light btn-sm" disabled>View Only</button>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
         </div>
     {% endfor %}
-</div>
+{% endif %}
 {% endblock %}
