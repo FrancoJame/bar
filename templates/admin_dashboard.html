@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - CHUPA ku CHUPA Bar & Lounge{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-container {
+        padding: 2rem 0;
+    }
+
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 2rem;
+        margin-bottom: 2rem;
+    }
+
+    .chart-card {
+        background: var(--card-bg);
+        border: 1px solid var(--glass-bg);
+        border-radius: 15px;
+        padding: 2rem;
+        transition: transform 0.3s ease;
+    }
+
+    .chart-card:hover {
+        transform: translateY(-5px);
+        border-color: var(--primary-gold);
+    }
+
+    .chart-card h3 {
+        color: var(--primary-gold);
+        margin-bottom: 1.5rem;
+        text-align: center;
+        font-size: 1.3rem;
+    }
+
+    .chart-container {
+        position: relative;
+        height: 300px;
+        width: 100%;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1.5rem;
+        margin-bottom: 2rem;
+    }
+
+    .stat-card {
+        background: var(--card-bg);
+        border: 1px solid var(--glass-bg);
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        border-color: var(--primary-gold);
+        transform: translateY(-3px);
+    }
+
+    .stat-value {
+        font-size: 2.5rem;
+        color: var(--primary-gold);
+        font-weight: bold;
+        margin-bottom: 0.5rem;
+    }
+
+    .stat-label {
+        font-size: 0.95rem;
+        opacity: 0.8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    .back-button {
+        display: inline-block;
+        margin-bottom: 2rem;
+    }
+
+    @media (max-width: 768px) {
+        .dashboard-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-container">
+    <div class="back-button">
+        <a href="{% url 'products:product_list' %}" class="btn btn-outline-light">
+            <i class="bi bi-arrow-left me-2"></i>Back to Menu
+        </a>
+    </div>
+
+    <div class="dashboard-header">
+        <h1 class="display-4 mb-2">Admin Dashboard</h1>
+        <p class="lead opacity-75">Monitor sales, room usage, and staff performance</p>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="total-orders">{{ top_products|length }}</div>
+            <div class="stat-label">Product Categories</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="total-bookings">{{ top_rooms|length }}</div>
+            <div class="stat-label">Active Rooms</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="active-staff">{{ top_staff|length }}</div>
+            <div class="stat-label">Staff Members</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="dashboard-grid">
+        <!-- Most Sold Products -->
+        <div class="chart-card">
+            <h3><i class="bi bi-graph-up me-2"></i>Most Sold Products</h3>
+            <div class="chart-container">
+                <canvas id="productsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Most Used Rooms -->
+        <div class="chart-card">
+            <h3><i class="bi bi-door-open me-2"></i>Most Used Rooms</h3>
+            <div class="chart-container">
+                <canvas id="roomsChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Most Active Staff -->
+        <div class="chart-card">
+            <h3><i class="bi bi-people me-2"></i>Most Active Staff</h3>
+            <div class="chart-container">
+                <canvas id="staffChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Chart.js Library -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+
+<script>
+    // Generate random colors for charts
+    function generateColors(count) {
+        const colors = [
+            '#D4AF37', // Gold
+            '#FF6B6B', // Red
+            '#4ECDC4', // Teal
+            '#45B7D1', // Blue
+            '#FFA07A', // Salmon
+            '#98D8C8', // Mint
+            '#F7DC6F', // Yellow
+            '#BB8FCE', // Purple
+        ];
+        return colors.slice(0, count);
+    }
+
+    // Fetch data and create charts
+    fetch('{% url "products:dashboard_data" %}')
+        .then(response => response.json())
+        .then(data => {
+            // Products Chart
+            const productsCtx = document.getElementById('productsChart').getContext('2d');
+            new Chart(productsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.products.labels.length > 0 ? data.products.labels : ['No Data'],
+                    datasets: [{
+                        data: data.products.data.length > 0 ? data.products.data : [0],
+                        backgroundColor: generateColors(data.products.data.length || 1),
+                        borderColor: 'var(--dark-bg)',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'var(--text-light)',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'var(--primary-gold)',
+                            bodyColor: 'var(--text-light)',
+                            borderColor: 'var(--primary-gold)',
+                            borderWidth: 1,
+                        }
+                    }
+                }
+            });
+
+            // Rooms Chart
+            const roomsCtx = document.getElementById('roomsChart').getContext('2d');
+            new Chart(roomsCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.rooms.labels.length > 0 ? data.rooms.labels : ['No Data'],
+                    datasets: [{
+                        data: data.rooms.data.length > 0 ? data.rooms.data : [0],
+                        backgroundColor: generateColors(data.rooms.data.length || 1),
+                        borderColor: 'var(--dark-bg)',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'var(--text-light)',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'var(--primary-gold)',
+                            bodyColor: 'var(--text-light)',
+                            borderColor: 'var(--primary-gold)',
+                            borderWidth: 1,
+                        }
+                    }
+                }
+            });
+
+            // Staff Chart
+            const staffCtx = document.getElementById('staffChart').getContext('2d');
+            new Chart(staffCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.staff.labels.length > 0 ? data.staff.labels : ['No Data'],
+                    datasets: [{
+                        data: data.staff.data.length > 0 ? data.staff.data : [0],
+                        backgroundColor: generateColors(data.staff.data.length || 1),
+                        borderColor: 'var(--dark-bg)',
+                        borderWidth: 2,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                color: 'var(--text-light)',
+                                padding: 15,
+                                font: { size: 12 }
+                            }
+                        },
+                        tooltip: {
+                            backgroundColor: 'rgba(0,0,0,0.8)',
+                            titleColor: 'var(--primary-gold)',
+                            bodyColor: 'var(--text-light)',
+                            borderColor: 'var(--primary-gold)',
+                            borderWidth: 1,
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => console.error('Error fetching dashboard data:', error));
+</script>
+{% endblock %}

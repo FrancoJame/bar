@@ -2,9 +2,26 @@ from django.urls import reverse_lazy
 from django.views.generic.edit import CreateView
 from django.views.generic import TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.views import LoginView
+from django.shortcuts import redirect
 from .forms import CustomUserCreationForm
 from .models import CustomUser
 from bookings.models import Booking
+
+class CustomLoginView(LoginView):
+    """Custom login view that redirects based on user role"""
+    template_name = 'accounts/login.html'
+    
+    def get_success_url(self):
+        user = self.request.user
+        
+        # Redirect based on user role
+        if user.role == 'MANAGER':
+            return reverse_lazy('products:dashboard')
+        elif user.role == 'STAFF':
+            return reverse_lazy('orders:pos')
+        else:  # CUSTOMER
+            return reverse_lazy('customer_dashboard')
 
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
