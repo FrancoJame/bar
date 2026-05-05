@@ -335,6 +335,9 @@
                             <li class="nav-item"><a class="nav-link fw-bold text-warning" href="{% url 'bookings:staff_manage' %}">Manage Bookings</a></li>
                             <li class="nav-item"><a class="nav-link fw-bold text-warning" href="{% url 'orders:transaction_list' %}">Transactions</a></li>
                         {% endif %}
+                        {% if user.role == 'MANAGER' %}
+                            <li class="nav-item"><a class="nav-link fw-bold text-success" href="{% url 'products:dashboard' %}"><i class="bi bi-bar-chart me-1"></i>Status</a></li>
+                        {% endif %}
                         {% if user.role != 'MANAGER' %}
                             <li class="nav-item"><a class="nav-link" href="{% url 'bookings:user_bookings' %}">My Bookings</a></li>
                         {% endif %}
